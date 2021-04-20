@@ -2,6 +2,10 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.filechooser.*;
+import javax.imageio.*;
 
 public class Fractals {
 
@@ -67,20 +71,50 @@ public class Fractals {
 
         contentPane.add(image, BorderLayout.CENTER);
 
-        JButton resDispButton = new JButton("Reset Display");
-        resDispButton.addActionListener(new ActionListener() {
+        /** Bottom panel construction **/
+        JPanel bottomPanel = new JPanel();
+
+        JButton resetDispButton = new JButton("Reset Display");
+        resetDispButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 generator.getInitialRange(range);
                 drawFractal();
             }
         });
 
-        contentPane.add(resDispButton, BorderLayout.SOUTH);
+        JButton saveImageButton = new JButton("Save Image");
+        saveImageButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                JFileChooser fChooser = new JFileChooser();
+                FileFilter filter = new FileNameExtensionFilter("PNG Images", "png");
+                fChooser.setFileFilter(filter);
+                fChooser.setAcceptAllFileFilterUsed(false);
+
+                if (fChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                    File file = fChooser.getSelectedFile();
+
+                    try {
+                        ImageIO.write(image.getBufi(), "png",
+                                new File(file.getAbsolutePath() + ".png"));
+                    }
+                    catch (IOException exception) {
+                        JOptionPane.showMessageDialog(frame, exception.getMessage(),
+                                "Unable to save image", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        bottomPanel.add(saveImageButton);
+        bottomPanel.add(resetDispButton);
+
+        contentPane.add(bottomPanel, BorderLayout.SOUTH);
 
         /** Top panel construction **/
-        JPanel panel = new JPanel();
-        panel.add(new JLabel("Fractal:"));
-        panel.add(menu);
+        JPanel topPanel = new JPanel();
+        topPanel.add(new JLabel("Fractal:"));
+        topPanel.add(menu);
 
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -91,7 +125,7 @@ public class Fractals {
             }
         });
 
-        contentPane.add(panel, BorderLayout.NORTH);
+        contentPane.add(topPanel, BorderLayout.NORTH);
 
         frame.pack();
         frame.setVisible(true);
