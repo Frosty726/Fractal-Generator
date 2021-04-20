@@ -5,7 +5,7 @@ import java.awt.geom.Rectangle2D;
 
 public class Fractals {
 
-    /** Size of display  **/
+    /** Size of display **/
     private int dispSize;
 
     /** Displaying image of fractal  **/
@@ -17,23 +17,33 @@ public class Fractals {
     /** Sets range of displaying complex area **/
     private Rectangle2D.Double range;
 
+    /** Choosing fractal menu **/
+    private JComboBox menu;
+
     public Fractals(int displaySize) {
 
         dispSize = displaySize;
         range = new Rectangle2D.Double(-2, -1.5, 3, 3);
         image = new JImageDisplay(displaySize, displaySize);
         generator = new Mandelbrot();
+
+        menu = new JComboBox();
+        menu.addItem(generator);
+        menu.addItem(new Tricorn());
+        menu.addItem(new BurningShip());
     }
 
+
+    /** Main method **/
     public static void main(String[] args) {
-        Fractals fractals = new Fractals(800);
+        Fractals fractals = new Fractals(512);
 
         fractals.initGUI();
         fractals.drawFractal();
     }
 
     /**
-     * Initialising GUI
+     * Initialising GUI method
      * */
     private void initGUI() {
 
@@ -60,18 +70,37 @@ public class Fractals {
         JButton resDispButton = new JButton("Reset Display");
         resDispButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                range.setRect(-2, -1.5, 3, 3);
+                generator.getInitialRange(range);
                 drawFractal();
             }
         });
 
         contentPane.add(resDispButton, BorderLayout.SOUTH);
 
+        /** Top panel construction **/
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("Fractal:"));
+        panel.add(menu);
+
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                generator = (FractalGenerator) menu.getSelectedItem();
+                generator.getInitialRange(range);
+
+                drawFractal();
+            }
+        });
+
+        contentPane.add(panel, BorderLayout.NORTH);
+
         frame.pack();
         frame.setVisible(true);
         frame.setResizable(false);
     }
 
+    /**
+     * Fractal drawing method
+     * */
     private void drawFractal() {
 
         /** Temporary support variables **/
