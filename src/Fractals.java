@@ -21,8 +21,15 @@ public class Fractals {
     /** Sets range of displaying complex area **/
     private Rectangle2D.Double range;
 
+    /** Application frame **/
+    private JFrame frame;
+
     /** Choosing fractal menu **/
     private JComboBox menu;
+
+    /** Buttons **/
+    private JButton resetDispButton;
+    private JButton saveImageButton;
 
     public Fractals(int displaySize) {
 
@@ -31,60 +38,34 @@ public class Fractals {
         image = new JImageDisplay(displaySize, displaySize);
         generator = new Mandelbrot();
 
+        frame = new JFrame("Mandelbrot Fractal Explorer");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        resetDispButton = new JButton("Reset Display");
+        saveImageButton = new JButton("Save Image");
+
         menu = new JComboBox();
         menu.addItem(generator);
         menu.addItem(new Tricorn());
         menu.addItem(new BurningShip());
     }
 
-
-    /** Main method **/
-    public static void main(String[] args) {
-        Fractals fractals = new Fractals(512);
-
-        fractals.initGUI();
-        fractals.drawFractal();
-    }
-
     /**
-     * Initialising GUI method
+     * Action handler class
      * */
-    private void initGUI() {
+    private class ActionHandler implements ActionListener {
 
-        JFrame frame = new JFrame("Mandelbrot Fractal Explorer");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Container contentPane = frame.getContentPane();
+        @Override
+        public void actionPerformed(ActionEvent e) {
 
-        contentPane.setLayout(new BorderLayout());
+            /** case: action source is "Reset Display" Button **/
+            if (e.getSource() == resetDispButton) {
 
-        image.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                double clickedX = FractalGenerator.getCoord(range.x, range.x + range.width,
-                        dispSize, e.getX());
-                double clickedY = FractalGenerator.getCoord(range.y, range.y + range.height,
-                        dispSize, e.getY());
-
-                generator.recenterAndZoomRange(range, clickedX, clickedY, 0.5);
-                drawFractal();
-            }
-        });
-
-        contentPane.add(image, BorderLayout.CENTER);
-
-        /** Bottom panel construction **/
-        JPanel bottomPanel = new JPanel();
-
-        JButton resetDispButton = new JButton("Reset Display");
-        resetDispButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
                 generator.getInitialRange(range);
                 drawFractal();
-            }
-        });
 
-        JButton saveImageButton = new JButton("Save Image");
-        saveImageButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            /** case: action source is "Save Image" Button **/
+            } else if (e.getSource() == saveImageButton) {
 
                 JFileChooser fChooser = new JFileChooser();
                 FileFilter filter = new FileNameExtensionFilter("PNG Images", "png");
@@ -103,8 +84,55 @@ public class Fractals {
                                 "Unable to save image", JOptionPane.ERROR_MESSAGE);
                     }
                 }
+
+            /** case: action source is fractal choosing menu **/
+            } else if (e.getSource() == menu) {
+
+                generator = (FractalGenerator) menu.getSelectedItem();
+                generator.getInitialRange(range);
+
+                drawFractal();
+            }
+        }
+    }
+
+    /** Main method **/
+    public static void main(String[] args) {
+        Fractals fractals = new Fractals(512);
+
+        fractals.initGUI();
+        fractals.drawFractal();
+    }
+
+    /**
+     * Initialising GUI method
+     * */
+    private void initGUI() {
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new BorderLayout());
+
+        ActionHandler actHand = new ActionHandler();
+
+        image.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                double clickedX = FractalGenerator.getCoord(range.x, range.x + range.width,
+                        dispSize, e.getX());
+                double clickedY = FractalGenerator.getCoord(range.y, range.y + range.height,
+                        dispSize, e.getY());
+
+                generator.recenterAndZoomRange(range, clickedX, clickedY, 0.5);
+                drawFractal();
             }
         });
+
+        contentPane.add(image, BorderLayout.CENTER);
+
+        /** Bottom panel construction **/
+        JPanel bottomPanel = new JPanel();
+
+        resetDispButton.addActionListener(actHand);
+        saveImageButton.addActionListener(actHand);
 
         bottomPanel.add(saveImageButton);
         bottomPanel.add(resetDispButton);
@@ -116,14 +144,7 @@ public class Fractals {
         topPanel.add(new JLabel("Fractal:"));
         topPanel.add(menu);
 
-        menu.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                generator = (FractalGenerator) menu.getSelectedItem();
-                generator.getInitialRange(range);
-
-                drawFractal();
-            }
-        });
+        menu.addActionListener(actHand);
 
         contentPane.add(topPanel, BorderLayout.NORTH);
 
