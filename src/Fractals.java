@@ -31,6 +31,9 @@ public class Fractals {
     private JButton resetDispButton;
     private JButton saveImageButton;
 
+    /** Variable for multithread handling **/
+    private int linesRemaining;
+
     public Fractals(int displaySize) {
 
         dispSize = displaySize;
@@ -154,6 +157,10 @@ public class Fractals {
                 image.drawPixel(x, y, line[x]);
 
             image.repaint(0, 0, y, dispSize, 1);
+
+            --linesRemaining;
+            if (linesRemaining == 0)
+                enableUI(true);
         }
     }
 
@@ -178,6 +185,9 @@ public class Fractals {
 
         image.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
+                if (linesRemaining > 0)
+                    return;
+
                 double clickedX = FractalGenerator.getCoord(range.x, range.x + range.width,
                         dispSize, e.getX());
                 double clickedY = FractalGenerator.getCoord(range.y, range.y + range.height,
@@ -219,13 +229,23 @@ public class Fractals {
      * Fractal drawing method
      * */
     private void drawFractal() {
+        enableUI(false);
+        linesRemaining = dispSize;
+
         FractalWorker fWorker;
 
         for (int y = 0; y < dispSize; ++y) {
             fWorker = new FractalWorker(y);
             fWorker.execute();
         }
+    }
 
-        image.repaint();
+    /**
+     * Handling access to UI method
+     * */
+    private void enableUI(boolean val) {
+        saveImageButton.setEnabled(val);
+        resetDispButton.setEnabled(val);
+        menu.setEnabled(val);
     }
 }
