@@ -50,6 +50,7 @@ public class Fractals {
         menu.addItem(new BurningShip());
     }
 
+
     /**
      * Action handler class
      * */
@@ -95,6 +96,67 @@ public class Fractals {
             }
         }
     }
+
+
+    /**
+     * Class for implementing multithreading feature.
+     * One thread estimating one line of fractal.
+     * */
+    private class FractalWorker extends SwingWorker<Object, Object> {
+
+        /** Coordinate of estimating line **/
+        private int y;
+
+        /** Estimated RGB colors of pixels in line **/
+        private int[] line;
+
+        public FractalWorker(int y) {
+            this.y = y;
+        }
+
+        /** Estimating color process **/
+        @Override
+        protected Object doInBackground() {
+
+            line = new int[dispSize];
+
+            /** Temporary support variables **/
+            double xCoord = 0;
+            double yCoord = 0;
+            int numIters = 0;
+            float hue = 0;
+
+            for (int x = 0; x < dispSize; ++x) {
+
+                xCoord = FractalGenerator.getCoord(range.x, range.x + range.width,
+                        dispSize, x);
+                yCoord = FractalGenerator.getCoord(range.y, range.y + range.height,
+                        dispSize, y);
+
+                numIters = generator.numIterations(xCoord, yCoord);
+
+                if (numIters == -1) {
+                    image.drawPixel(x, y, 0);
+                    continue;
+                }
+
+                hue = 0.7f + (float) numIters / 200f;
+                line[x] = Color.HSBtoRGB(hue, 1f, 1f);
+            }
+
+            return null;
+        }
+
+        /** Drawing pixels with estimated colors **/
+        @Override
+        protected void done() {
+            for (int x = 0; x < dispSize; ++x)
+                image.drawPixel(x, y, line[x]);
+
+            image.repaint(0, 0, y, dispSize, 1);
+        }
+    }
+
 
     /** Main method **/
     public static void main(String[] args) {
@@ -157,34 +219,12 @@ public class Fractals {
      * Fractal drawing method
      * */
     private void drawFractal() {
+        FractalWorker fWorker;
 
-        /** Temporary support variables **/
-        double xCoord = 0;
-        double yCoord = 0;
-        int numIters = 0;
-        int colorRGB = 0;
-        float hue = 0;
-
-        for (int x = 0; x < dispSize; ++x)
-            for (int y = 0; y < dispSize; ++y) {
-
-                xCoord = FractalGenerator.getCoord(range.x, range.x + range.width,
-                        dispSize, x);
-                yCoord = FractalGenerator.getCoord(range.y, range.y + range.height,
-                        dispSize, y);
-
-                numIters = generator.numIterations(xCoord, yCoord);
-
-                if (numIters == -1) {
-                    image.drawPixel(x, y, 0);
-                    continue;
-                }
-
-                hue = 0.7f + (float) numIters / 200f;
-                colorRGB = Color.HSBtoRGB(hue, 1f, 1f);
-
-                image.drawPixel(x, y, colorRGB);
-            }
+        for (int y = 0; y < dispSize; ++y) {
+            fWorker = new FractalWorker(y);
+            fWorker.execute();
+        }
 
         image.repaint();
     }
